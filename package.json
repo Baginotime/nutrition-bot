@@ -1,0 +1,14 @@
+{
+  "name": "nutrition-app-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "bot": "npx ts-node bot/index.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.5",
+    "telegraf": "^4.16.3",
+    "ts-node": "^10.9.2"
+  }
+}

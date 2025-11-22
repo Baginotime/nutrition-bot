@@ -1,0 +1,15 @@
+# зависимости
+node_modules/
+
+# сборка Next
+nutrition-web/.next/
+
+# локальные env
+.env
+.env.local
+.env.bot
+
+# логи
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
