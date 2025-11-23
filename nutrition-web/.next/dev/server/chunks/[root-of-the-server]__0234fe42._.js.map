@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/NutritionApp/nutrition-web/app/api/test-supa/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\r\n\r\nexport async function GET() {\r\n  return NextResponse.json({\r\n    ok: true,\r\n    msg: 'HELLO_FROM_ROUTE_TS',\r\n    version: 'v3',\r\n  });\r\n}\r\n"],"names":[],"mappings":";;;;AAAA;;AAEO,eAAe;IACpB,OAAO,gJAAY,CAAC,IAAI,CAAC;QACvB,IAAI;QACJ,KAAK;QACL,SAAS;IACX;AACF"}}]
-}

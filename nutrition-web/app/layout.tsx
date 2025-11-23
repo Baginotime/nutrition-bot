@@ -1,22 +1,22 @@
-import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ subsets: ['latin'] })
+// nutrition-web/app/layout.tsx
+import './globals.css';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Nutrition bot',
-  description: 'Telegram nutrition assistant',
-}
+  title: 'Nutrition WebApp',
+  description: 'Анкета питания для бота в Telegram',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="ru">
+      <body className="min-h-screen bg-slate-950 text-slate-50">
+        {children}
+      </body>
     </html>
-  )
+  );
 }

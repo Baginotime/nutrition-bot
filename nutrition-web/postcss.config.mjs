@@ -1,4 +1,5 @@
-export default {
+// nutrition-web/postcss.config.js
+module.exports = {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},

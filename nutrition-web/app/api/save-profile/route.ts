@@ -1,38 +1,55 @@
-// nutrition-web/app/api/users/route.ts
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextResponse } from "next/server";
+import { supabase } from "../../../lib/supabase";
 
-export async function GET(req: Request) {
+export const dynamic = "force-dynamic";
+
+export async function POST(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const telegramId = searchParams.get('telegram_id');
+    const body = await req.json();
 
-    if (!telegramId) {
+    const {
+      age,
+      gender,
+      height,
+      weight,
+      activity, // low | medium | high
+      goal,     // lose_fat | maintain | gain_muscle
+    } = body || {};
+
+    // простая валидация
+    if (!age || !height || !weight || !gender) {
       return NextResponse.json(
-        { error: 'telegram_id is required' },
+        { message: "Заполни возраст, пол, рост и вес." },
         { status: 400 }
       );
     }
 
     const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('telegram_id', telegramId)
-      .maybeSingle();
+      .from("profiles") // тут имя твоей таблицы
+      .insert({
+        age,
+        gender,
+        height,
+        weight,
+        activity_level: activity,
+        goal,
+      })
+      .select()
+      .single();
 
     if (error) {
-      console.error('Supabase error in users GET:', error);
+      console.error("supabase insert error", error);
       return NextResponse.json(
-        { error: error.message },
+        { message: "Ошибка при сохранении анкеты" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ user: data }, { status: 200 });
-  } catch (e: any) {
-    console.error('users route error:', e);
+    return NextResponse.json({ success: true, profile: data });
+  } catch (err) {
+    console.error("save-profile route error", err);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { message: "Внутренняя ошибка сервера" },
       { status: 500 }
     );
   }

@@ -1,292 +1,342 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import React, { useState } from "react";
 
-type ActivityLevel = 'low' | 'medium' | 'high';
-type Goal = 'lose_fat' | 'maintain' | 'gain_muscle';
+type Step = "intro" | "form" | "success";
 
-interface ProfileForm {
-  age: string;
-  gender: 'male' | 'female';
-  height: string;
-  weight: string;
-  activity: ActivityLevel;
-  goal: Goal;
-}
+type Gender = "male" | "female";
+type ActivityLevel = "low" | "medium" | "high";
+type Goal = "lose_fat" | "maintain" | "gain_muscle";
 
-export default function HomePage() {
-  const [form, setForm] = useState<ProfileForm>({
-    age: '',
-    gender: 'male',
-    height: '',
-    weight: '',
-    activity: 'medium',
-    goal: 'lose_fat',
-  });
+export default function Page() {
+  const [step, setStep] = useState<Step>("intro");
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
+  // поля анкеты
+  const [age, setAge] = useState<string>("");
+  const [gender, setGender] = useState<Gender>("male");
+  const [height, setHeight] = useState<string>("");
+  const [weight, setWeight] = useState<string>("");
+  const [activity, setActivity] = useState<ActivityLevel>("low");
+  const [goal, setGoal] = useState<Goal>("lose_fat");
+
+  // служебное
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (
-    field: keyof ProfileForm,
-    value: string
-  ) => {
-    setForm((prev) => ({ ...prev, [field]: value as any }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
-    setSuccess(null);
-    setError(null);
 
     try {
-      const res = await fetch('/api/save-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          age: Number(form.age),
-          gender: form.gender,
-          height: Number(form.height),
-          weight: Number(form.weight),
-          activity: form.activity,
-          goal: form.goal,
-        }),
+      setIsSubmitting(true);
+      setError(null);
+
+      const body = {
+        age: age ? Number(age) : null,
+        gender,
+        height: height ? Number(height) : null,
+        weight: weight ? Number(weight) : null,
+        activity, // low | medium | high
+        goal,     // lose_fat | maintain | gain_muscle
+      };
+
+      const res = await fetch("/api/save-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.message || 'Server error');
+        let msg = "Не удалось сохранить анкету";
+        try {
+          const data = await res.json();
+          if (data?.message) msg = data.message;
+        } catch {
+          // забиваем
+        }
+        throw new Error(msg);
       }
 
-      setSuccess('Анкета сохранена, можно закрывать окно ✅');
+      // все ок, показваем экран успеха
+      setStep("success");
     } catch (err: any) {
-      setError(err.message || 'Не удалось сохранить анкету');
+      console.error(err);
+      setError(
+        err?.message || "Что-то пошло не так. Попробуй еще раз."
+      );
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
-  };
+  }
 
-  return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl">
-        <h1 className="text-2xl font-semibold mb-1">
-          Анкета питания
-        </h1>
-        <p className="text-sm text-slate-400 mb-6">
-          Ответы нужны боту, чтобы посчитать твою норму калорий и КБЖУ.
-        </p>
+  // ЭКРАН 1 интро
+  if (step === "intro") {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#f5f2ea]">
+        <div className="max-w-2xl w-full mx-4 bg-white rounded-3xl shadow-xl px-8 py-14 text-center">
+          <p className="text-sm tracking-[0.3em] uppercase text-[#9ca3af] mb-4">
+            ТВОЙ ДНЕВНИК ПИТАНИЯ
+          </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Возраст и пол */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <h1 className="text-3xl md:text-4xl font-semibold text-[#111827] mb-6">
+            Считаем, сколько калорий нужно
+            <br />
+            в день
+          </h1>
+
+          <p className="text-base text-[#4b5563] mb-10">
+            Просто ответь на пару вопросов, а дальше бот все посчитает сам.
+          </p>
+
+          <button
+            onClick={() => setStep("form")}
+            className="inline-flex items-center justify-center px-10 py-3.5
+                       rounded-full bg-[#6bbf7a] text-white text-lg font-semibold
+                       hover:bg-[#59aa68] transition-colors"
+          >
+            Начать
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // ЭКРАН 2 анкета
+  if (step === "form") {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#f5f2ea]">
+        <div className="max-w-xl w-full mx-4 bg-white rounded-3xl shadow-xl px-6 py-8">
+          <h2 className="text-2xl font-semibold text-[#111827] mb-6">
+            Анкета питания
+          </h2>
+          <p className="text-sm text-[#4b5563] mb-6">
+            Ответы нужны боту, чтобы посчитать твою норму калорий и КБЖУ.
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* возраст */}
             <div>
-              <label className="block text-sm mb-1">
+              <label className="block text-sm font-medium text-[#374151] mb-1">
                 Возраст
               </label>
               <input
                 type="number"
                 min={10}
-                max={90}
-                value={form.age}
-                onChange={(e) =>
-                  handleChange('age', e.target.value)
-                }
+                max={100}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                className="w-full rounded-xl border border-[#e5e7eb] px-3 py-2
+                           text-sm focus:outline-none focus:ring-2 focus:ring-[#6bbf7a]"
+                placeholder="Например, 27"
                 required
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-emerald-400"
               />
             </div>
 
+            {/* пол */}
             <div>
-              <label className="block text-sm mb-1">
+              <label className="block text-sm font-medium text-[#374151] mb-1">
                 Пол
               </label>
               <select
-                value={form.gender}
-                onChange={(e) =>
-                  handleChange('gender', e.target.value)
-                }
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                value={gender}
+                onChange={(e) => setGender(e.target.value as Gender)}
+                className="w-full rounded-xl border border-[#e5e7eb] px-3 py-2
+                           text-sm focus:outline-none focus:ring-2 focus:ring-[#6bbf7a]"
               >
                 <option value="male">Мужской</option>
                 <option value="female">Женский</option>
               </select>
             </div>
-          </div>
 
-          {/* Рост и вес */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* рост */}
             <div>
-              <label className="block text-sm mb-1">
+              <label className="block text-sm font-medium text-[#374151] mb-1">
                 Рост, см
               </label>
               <input
                 type="number"
                 min={120}
                 max={230}
-                value={form.height}
-                onChange={(e) =>
-                  handleChange('height', e.target.value)
-                }
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                className="w-full rounded-xl border border-[#e5e7eb] px-3 py-2
+                           text-sm focus:outline-none focus:ring-2 focus:ring-[#6bbf7a]"
+                placeholder="Например, 180"
                 required
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-emerald-400"
               />
             </div>
 
+            {/* вес */}
             <div>
-              <label className="block text-sm mb-1">
+              <label className="block text-sm font-medium text-[#374151] mb-1">
                 Вес, кг
               </label>
               <input
                 type="number"
-                min={35}
-                max={200}
+                min={30}
+                max={300}
                 step="0.1"
-                value={form.weight}
-                onChange={(e) =>
-                  handleChange('weight', e.target.value)
-                }
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                className="w-full rounded-xl border border-[#e5e7eb] px-3 py-2
+                           text-sm focus:outline-none focus:ring-2 focus:ring-[#6bbf7a]"
+                placeholder="Например, 75"
                 required
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-emerald-400"
               />
             </div>
-          </div>
 
-          {/* Активность */}
-          <div>
-            <label className="block text-sm mb-2">
-              Уровень активности
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() =>
-                  handleChange('activity', 'low')
-                }
-                className={`rounded-lg border px-3 py-2 text-left ${
-                  form.activity === 'low'
-                    ? 'border-emerald-400 bg-emerald-500/10'
-                    : 'border-slate-700 bg-slate-900'
-                }`}
-              >
-                Малая
-                <span className="block text-xs text-slate-400">
-                  0–1 тренировка в неделю
-                </span>
-              </button>
+            {/* активность */}
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1">
+                Уровень активности
+              </label>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                <label className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    className="h-4 w-4"
+                    checked={activity === "low"}
+                    onChange={() => setActivity("low")}
+                  />
+                  <span>
+                    <span className="font-medium">Малая</span>
+                    <span className="text-[#6b7280]"> 0–1 тренировка в неделю</span>
+                  </span>
+                </label>
 
-              <button
-                type="button"
-                onClick={() =>
-                  handleChange('activity', 'medium')
-                }
-                className={`rounded-lg border px-3 py-2 text-left ${
-                  form.activity === 'medium'
-                    ? 'border-emerald-400 bg-emerald-500/10'
-                    : 'border-slate-700 bg-slate-900'
-                }`}
-              >
-                Средняя
-                <span className="block text-xs text-slate-400">
-                  2–4 тренировки
-                </span>
-              </button>
+                <label className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    className="h-4 w-4"
+                    checked={activity === "medium"}
+                    onChange={() => setActivity("medium")}
+                  />
+                  <span>
+                    <span className="font-medium">Средняя</span>
+                    <span className="text-[#6b7280]"> 2–4 тренировки</span>
+                  </span>
+                </label>
 
-              <button
-                type="button"
-                onClick={() =>
-                  handleChange('activity', 'high')
-                }
-                className={`rounded-lg border px-3 py-2 text-left ${
-                  form.activity === 'high'
-                    ? 'border-emerald-400 bg-emerald-500/10'
-                    : 'border-slate-700 bg-slate-900'
-                }`}
-              >
-                Высокая
-                <span className="block text-xs text-slate-400">
-                  5+ тренировок
-                </span>
-              </button>
+                <label className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    className="h-4 w-4"
+                    checked={activity === "high"}
+                    onChange={() => setActivity("high")}
+                  />
+                  <span>
+                    <span className="font-medium">Высокая</span>
+                    <span className="text-[#6b7280]"> 5+ тренировок</span>
+                  </span>
+                </label>
+              </div>
             </div>
-          </div>
 
-          {/* Цель */}
-          <div>
-            <label className="block text-sm mb-2">
-              Цель
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() =>
-                  handleChange('goal', 'lose_fat')
-                }
-                className={`rounded-lg border px-3 py-2 text-left ${
-                  form.goal === 'lose_fat'
-                    ? 'border-emerald-400 bg-emerald-500/10'
-                    : 'border-slate-700 bg-slate-900'
-                }`}
-              >
-                Снижение жира
-              </button>
+            {/* цель */}
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1">
+                Цель
+              </label>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                <label className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    className="h-4 w-4"
+                    checked={goal === "lose_fat"}
+                    onChange={() => setGoal("lose_fat")}
+                  />
+                  <span className="font-medium">Снижение жира</span>
+                </label>
 
-              <button
-                type="button"
-                onClick={() =>
-                  handleChange('goal', 'maintain')
-                }
-                className={`rounded-lg border px-3 py-2 text-left ${
-                  form.goal === 'maintain'
-                    ? 'border-emerald-400 bg-emerald-500/10'
-                    : 'border-slate-700 bg-slate-900'
-                }`}
-              >
-                Поддержание
-              </button>
+                <label className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    className="h-4 w-4"
+                    checked={goal === "maintain"}
+                    onChange={() => setGoal("maintain")}
+                  />
+                  <span className="font-medium">Поддержание</span>
+                </label>
 
-              <button
-                type="button"
-                onClick={() =>
-                  handleChange('goal', 'gain_muscle')
-                }
-                className={`rounded-lg border px-3 py-2 text-left ${
-                  form.goal === 'gain_muscle'
-                    ? 'border-emerald-400 bg-emerald-500/10'
-                    : 'border-slate-700 bg-slate-900'
-                }`}
-              >
-                Набор мышц
-              </button>
+                <label className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    className="h-4 w-4"
+                    checked={goal === "gain_muscle"}
+                    onChange={() => setGoal("gain_muscle")}
+                  />
+                  <span className="font-medium">Набор мышц</span>
+                </label>
+              </div>
             </div>
-          </div>
 
-          {/* Сообщения */}
-          {success && (
-            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-              {success}
-            </div>
-          )}
+            {error && (
+              <p className="text-sm text-red-500">
+                {error}
+              </p>
+            )}
 
-          {error && (
-            <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-              {error}
-            </div>
-          )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-4 w-full px-6 py-3 rounded-full bg-[#6bbf7a] text-white
+                         font-semibold text-base hover:bg-[#59aa68]
+                         disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Сохраняем..." : "Сохранить анкету"}
+            </button>
+          </form>
+        </div>
+      </main>
+    );
+  }
 
-          {/* Кнопка */}
+  // ЭКРАН 3 успех
+  if (step === "success") {
+    const tg =
+      typeof window !== "undefined"
+        ? (window as any).Telegram?.WebApp
+        : null;
+
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#f5f2ea]">
+        <div className="max-w-xl w-full mx-4 bg-white rounded-3xl shadow-xl px-8 py-10 text-center">
+          <p className="text-sm tracking-[0.3em] uppercase text-[#9ca3af] mb-3">
+            Анкета сохранена
+          </p>
+
+          <h1 className="text-2xl md:text-3xl font-semibold text-[#111827] mb-4">
+            Готово, мы записали твои данные
+          </h1>
+
+          <p className="text-base text-[#4b5563] mb-8">
+            Бот теперь знает твой возраст, вес, активность и цель. Можно закрывать окно и продолжать в Telegram.
+          </p>
+
           <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
+            onClick={() => {
+              if (tg) {
+                tg.close();
+              } else {
+                window.location.href = "/";
+              }
+            }}
+            className="inline-flex items-center justify-center px-8 py-3
+                       rounded-full bg-[#6bbf7a] text-white text-base font-semibold
+                       hover:bg-[#59aa68] transition-colors"
           >
-            {loading ? 'Сохраняю…' : 'Сохранить анкету'}
+            Вернуться в бота
           </button>
-        </form>
-      </div>
-    </main>
-  );
+
+          <button
+            onClick={() => setStep("form")}
+            className="mt-4 block mx-auto text-sm text-[#6b7280] hover:text-[#374151]"
+          >
+            Заполнить заново
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return null;
 }

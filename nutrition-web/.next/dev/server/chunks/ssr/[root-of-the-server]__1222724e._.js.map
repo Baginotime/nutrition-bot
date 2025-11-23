@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 20, "column": 0}, "map": {"version":3,"sources":["file:///C:/NutritionApp/nutrition-web/app/page.tsx"],"sourcesContent":["const res = await fetch('/api/users', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    age,\n    gender,\n    height,\n    weight,\n    activityLevel,\n  }),\n});\n\nconst json = await res.json();\nconsole.log('RESPONSE FROM /api/users:', json);\n\nif (!res.ok || !json.ok) {\n  // показать красную надпись\n} else {\n  // скрыть надпись\n}\n"],"names":[],"mappings":"AAAA,MAAM,MAAM,MAAM,MAAM,cAAc;IACpC,QAAQ;IACR,SAAS;QAAE,gBAAgB;IAAmB;IAC9C,MAAM,KAAK,SAAS,CAAC;QACnB;QACA;QACA;QACA;QACA;IACF;AACF;AAEA,MAAM,OAAO,MAAM,IAAI,IAAI;AAC3B,QAAQ,GAAG,CAAC,6BAA6B;AAEzC,IAAI,CAAC,IAAI,EAAE,IAAI,CAAC,KAAK,EAAE,EAAE;AACvB,2BAA2B;AAC7B,OAAO;AACL,iBAAiB;AACnB"}}]
-}

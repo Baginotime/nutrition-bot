@@ -15,7 +15,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "baseUrl": ".", // <- важно
     "paths": {
@@ -37,8 +37,10 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/dev/types/**/*.ts"
-, "../bot/user.ts", "../bot/index.ts"  ],
+    ".next/dev/types/**/*.ts",
+    "../bot/user.ts",
+    "../bot/index.ts"
+  ],
   "exclude": [
     "node_modules"
   ]
