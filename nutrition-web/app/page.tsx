@@ -1,20 +1,13 @@
-const res = await fetch('/api/users', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    age,
-    gender,
-    height,
-    weight,
-    activityLevel,
-  }),
-});
+import { createClient } from '../lib/supabase'
 
-const json = await res.json();
-console.log('RESPONSE FROM /api/users:', json);
+const supabase = createClient()
 
-if (!res.ok || !json.ok) {
-  // показать красную надпись
-} else {
-  // скрыть надпись
+export default async function Page() {
+  const { data } = await supabase.from('meals').select('*')
+
+  return (
+    <main>
+      {/* использование data, как было раньше */}
+    </main>
+  )
 }
