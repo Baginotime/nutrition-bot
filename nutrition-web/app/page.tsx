@@ -1,13 +1,12 @@
-import { createClient } from '../lib/supabase';
+// nutrition-web/app/page.tsx
+'use client';
 
-const supabase = createClient()
-
-export default async function Page() {
-  const { data } = await supabase.from('meals').select('*')
-
+export default function HomePage() {
   return (
-    <main>
-      {/* использование data, как было раньше */}
+    <main className="min-h-screen flex items-center justify-center">
+      <h1 className="text-2xl font-semibold">
+        Nutrition WebApp is running 🚀
+      </h1>
     </main>
-  )
+  );
 }
