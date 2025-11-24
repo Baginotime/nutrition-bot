@@ -31,9 +31,11 @@ type FormData = {
   goal: string;
 };
 
+// Порядок: приветствие -> пол -> возраст -> рост -> вес -> активность -> цель
 const STEPS = [
-  { id: 1, title: "Возраст", emoji: "🎂", field: "age" as keyof FormData },
-  { id: 2, title: "Пол", emoji: "👤", field: "gender" as keyof FormData },
+  { id: 0, title: "Приветствие", emoji: "👋", field: null as any, isWelcome: true },
+  { id: 1, title: "Пол", emoji: "👤", field: "gender" as keyof FormData },
+  { id: 2, title: "Возраст", emoji: "🎂", field: "age" as keyof FormData },
   { id: 3, title: "Рост", emoji: "📏", field: "height" as keyof FormData },
   { id: 4, title: "Вес", emoji: "⚖️", field: "weight" as keyof FormData },
   { id: 5, title: "Активность", emoji: "🏃", field: "activity" as keyof FormData },
@@ -82,12 +84,23 @@ export default function HomePage() {
   }, []);
 
   const handleNext = () => {
-    const currentField = STEPS[currentStep].field;
-    if (form[currentField] && form[currentField] !== "") {
-      if (currentStep < STEPS.length - 1) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        handleSubmit();
+    const step = STEPS[currentStep];
+    
+    // Для приветственного экрана просто переходим дальше
+    if (step.isWelcome) {
+      setCurrentStep(currentStep + 1);
+      return;
+    }
+    
+    // Для остальных шагов проверяем заполненность
+    if (step.field) {
+      const fieldValue = form[step.field as keyof FormData];
+      if (fieldValue && fieldValue !== "") {
+        if (currentStep < STEPS.length - 1) {
+          setCurrentStep(currentStep + 1);
+        } else {
+          handleSubmit();
+        }
       }
     }
   };
@@ -101,6 +114,8 @@ export default function HomePage() {
   const handleSubmit = async () => {
     setStatus("loading");
     try {
+      console.log("Submitting form:", form);
+      
       const res = await fetch("/api/save-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,40 +123,41 @@ export default function HomePage() {
       });
 
       const data = await res.json();
+      console.log("Response:", res.status, data);
+      
       if (!res.ok) {
-        setStatus(data?.message || "Ошибка");
+        console.error("Error response:", data);
+        setStatus(data?.message || data?.error || "Ошибка при сохранении");
         return;
       }
+      
       setStatus("saved");
     } catch (err) {
-      console.error("fetch error:", err);
-      setStatus("network_error");
+      console.error("Fetch error:", err);
+      setStatus("Ошибка сети. Проверь подключение к интернету.");
     }
   };
 
   const renderStepContent = () => {
     const step = STEPS[currentStep];
     
+    // Приветственный экран
+    if (step.isWelcome) {
+      return (
+        <div style={fieldContainerStyle}>
+          <div style={emojiStyle}>👋</div>
+          <h2 style={stepTitleStyle}>Привет!</h2>
+          <p style={stepDescriptionStyle}>
+            Давай определим твою норму калорий на сутки
+          </p>
+          <p style={welcomeTextStyle}>
+            Ответь на несколько простых вопросов, и мы рассчитаем персональную норму калорий и макронутриентов специально для тебя.
+          </p>
+        </div>
+      );
+    }
+    
     switch (step.field) {
-      case "age":
-        return (
-          <div style={fieldContainerStyle}>
-            <div style={emojiStyle}>{step.emoji}</div>
-            <h2 style={stepTitleStyle}>{step.title}</h2>
-            <p style={stepDescriptionStyle}>Сколько тебе лет?</p>
-            <input
-              type="number"
-              value={form.age}
-              onChange={(e) => setForm({ ...form, age: e.target.value })}
-              style={inputStyle}
-              placeholder="Введите возраст"
-              min="1"
-              max="120"
-              autoFocus
-            />
-          </div>
-        );
-
       case "gender":
         return (
           <div style={fieldContainerStyle}>
@@ -172,6 +188,25 @@ export default function HomePage() {
                 👩 Женский
               </button>
             </div>
+          </div>
+        );
+
+      case "age":
+        return (
+          <div style={fieldContainerStyle}>
+            <div style={emojiStyle}>{step.emoji}</div>
+            <h2 style={stepTitleStyle}>{step.title}</h2>
+            <p style={stepDescriptionStyle}>Сколько тебе лет?</p>
+            <input
+              type="number"
+              value={form.age}
+              onChange={(e) => setForm({ ...form, age: e.target.value })}
+              style={inputStyle}
+              placeholder="Введите возраст"
+              min="1"
+              max="120"
+              autoFocus
+            />
           </div>
         );
 
@@ -313,23 +348,29 @@ export default function HomePage() {
     );
   }
 
+  const step = STEPS[currentStep];
+  const isWelcomeStep = step.isWelcome;
+  const canProceed = isWelcomeStep || (step.field && form[step.field as keyof FormData] && form[step.field as keyof FormData] !== "");
+
   return (
     <main style={mainStyle}>
       <div style={cardStyle}>
-        {/* Progress bar */}
-        <div style={progressContainerStyle}>
-          <div style={progressBarStyle}>
-            <div
-              style={{
-                ...progressFillStyle,
-                width: `${((currentStep + 1) / STEPS.length) * 100}%`,
-              }}
-            />
+        {/* Progress bar - скрываем на приветственном экране */}
+        {!isWelcomeStep && (
+          <div style={progressContainerStyle}>
+            <div style={progressBarStyle}>
+              <div
+                style={{
+                  ...progressFillStyle,
+                  width: `${((currentStep) / (STEPS.length - 1)) * 100}%`,
+                }}
+              />
+            </div>
+            <div style={progressTextStyle}>
+              {currentStep} из {STEPS.length - 1}
+            </div>
           </div>
-          <div style={progressTextStyle}>
-            {currentStep + 1} из {STEPS.length}
-          </div>
-        </div>
+        )}
 
         {/* Step content */}
         {renderStepContent()}
@@ -348,11 +389,11 @@ export default function HomePage() {
           <button
             type="button"
             onClick={handleNext}
-            disabled={!form[STEPS[currentStep].field] || form[STEPS[currentStep].field] === ""}
+            disabled={!canProceed}
             style={{
               ...nextButtonStyle,
-              opacity: !form[STEPS[currentStep].field] || form[STEPS[currentStep].field] === "" ? 0.5 : 1,
-              cursor: !form[STEPS[currentStep].field] || form[STEPS[currentStep].field] === "" ? "not-allowed" : "pointer",
+              opacity: !canProceed ? 0.5 : 1,
+              cursor: !canProceed ? "not-allowed" : "pointer",
             }}
           >
             {currentStep === STEPS.length - 1 ? "Сохранить ✅" : "Далее →"}
@@ -445,6 +486,14 @@ const stepDescriptionStyle: React.CSSProperties = {
   fontSize: "16px",
   color: "#6b7280",
   marginBottom: "32px",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
+
+const welcomeTextStyle: React.CSSProperties = {
+  fontSize: "16px",
+  color: "#4b5563",
+  lineHeight: "1.6",
+  maxWidth: "400px",
   fontFamily: "system-ui, -apple-system, sans-serif",
 };
 

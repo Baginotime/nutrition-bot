@@ -7,6 +7,7 @@ export async function POST(req: Request) {
   try {
     validateSupabaseEnv();
     const body = await req.json();
+    console.log("Received request body:", body);
 
     const {
       age,
@@ -18,9 +19,10 @@ export async function POST(req: Request) {
     } = body || {};
 
     // простая валидация
-    if (!age || !height || !weight || !gender) {
+    if (!age || !height || !weight || !gender || !activity || !goal) {
+      console.error("Validation failed:", { age, height, weight, gender, activity, goal });
       return NextResponse.json(
-        { message: "Заполни возраст, пол, рост и вес." },
+        { message: "Заполни все поля: возраст, пол, рост, вес, активность и цель." },
         { status: 400 }
       );
     }
@@ -44,9 +46,14 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      console.error("supabase insert error", error);
+      console.error("supabase insert error:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { message: "Ошибка при сохранении анкеты" },
+        { 
+          message: "Ошибка при сохранении анкеты",
+          error: error.message,
+          details: error.details || error.hint || null
+        },
         { status: 500 }
       );
     }
