@@ -1,9 +1,10 @@
 // app/api/users/route.ts
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, validateSupabaseEnv } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
+    validateSupabaseEnv();
     const body = await req.json();
     const { age, gender, height, weight, activityLevel } = body;
 

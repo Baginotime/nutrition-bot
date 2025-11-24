@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { supabase } from "../../../lib/supabase";
+import { supabase, validateSupabaseEnv } from "../../../lib/supabase";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
+    validateSupabaseEnv();
     const body = await req.json();
 
     const {

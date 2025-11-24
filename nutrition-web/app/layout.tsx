@@ -1,20 +1,14 @@
-// nutrition-web/app/layout.tsx
-import './globals.css';
-import type { Metadata } from 'next';
+import "./globals.css";
 
-export const metadata: Metadata = {
-  title: 'Nutrition WebApp',
-  description: 'Анкета питания для бота в Telegram',
+export const metadata = {
+  title: "Nutrition WebApp",
+  description: "Calculate daily calories and macros",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
-      <body className="min-h-screen bg-slate-950 text-slate-50">
+      <body className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 sm:p-6">
         {children}
       </body>
     </html>
