@@ -9,6 +9,8 @@ declare global {
         ready: () => void;
         expand: () => void;
         close: () => void;
+        setHeaderColor?: (color: string) => void;
+        setBackgroundColor?: (color: string) => void;
         MainButton: {
           text: string;
           show: () => void;
@@ -23,9 +25,37 @@ declare global {
 export default function HomePage() {
   useEffect(() => {
     // Инициализация Telegram Web App
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
+    if (typeof window !== "undefined") {
+      // Ждем загрузки скрипта Telegram
+      const initTelegram = () => {
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+          // Настраиваем тему (если методы доступны)
+          if (window.Telegram.WebApp.setHeaderColor) {
+            window.Telegram.WebApp.setHeaderColor("#ffffff");
+          }
+          if (window.Telegram.WebApp.setBackgroundColor) {
+            window.Telegram.WebApp.setBackgroundColor("#f0f9ff");
+          }
+        }
+      };
+      
+      // Если уже загружен
+      if (window.Telegram?.WebApp) {
+        initTelegram();
+      } else {
+        // Ждем загрузки
+        const checkInterval = setInterval(() => {
+          if (window.Telegram?.WebApp) {
+            initTelegram();
+            clearInterval(checkInterval);
+          }
+        }, 100);
+        
+        // Таймаут на случай, если скрипт не загрузится
+        setTimeout(() => clearInterval(checkInterval), 5000);
+      }
     }
   }, []);
   const [form, setForm] = useState({
@@ -70,11 +100,46 @@ export default function HomePage() {
   }
 
   return (
-    <main className="w-full max-w-lg mx-auto p-4 sm:p-6">
-      <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Анкета питания</h1>
-          <p className="text-gray-600 text-sm">Заполните данные для расчета вашей нормы калорий</p>
+    <main 
+      className="w-full max-w-lg mx-auto p-4 sm:p-6"
+      style={{
+        width: '100%',
+        maxWidth: '32rem',
+        margin: '0 auto',
+        padding: '1rem',
+      }}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-100"
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '1rem',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          padding: '2rem',
+          border: '1px solid #f3f4f6',
+        }}
+      >
+        <div className="mb-8" style={{ marginBottom: '2rem' }}>
+          <h1 
+            className="text-3xl font-bold text-gray-900 mb-2"
+            style={{
+              fontSize: '1.875rem',
+              fontWeight: '700',
+              color: '#111827',
+              marginBottom: '0.5rem',
+            }}
+          >
+            Анкета питания
+          </h1>
+          <p 
+            className="text-gray-600 text-sm"
+            style={{
+              color: '#4b5563',
+              fontSize: '0.875rem',
+            }}
+          >
+            Заполните данные для расчета вашей нормы калорий
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -89,6 +154,15 @@ export default function HomePage() {
               setForm({ ...form, age: e.target.value })
             }
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-gray-50 text-gray-900 placeholder-gray-400"
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              border: '2px solid #e5e7eb',
+              borderRadius: '0.5rem',
+              backgroundColor: '#f9fafb',
+              color: '#111827',
+              fontSize: '1rem',
+            }}
             placeholder="Введите возраст"
             min="1"
             max="120"

@@ -25,13 +25,18 @@ export async function POST(req: Request) {
       );
     }
 
+    // Преобразуем строки в числа
+    const ageNum = parseInt(age, 10);
+    const heightNum = parseFloat(height);
+    const weightNum = parseFloat(weight);
+
     const { data, error } = await supabase
       .from("profiles") // тут имя твоей таблицы
       .insert({
-        age,
+        age: ageNum,
         gender,
-        height,
-        weight,
+        height: heightNum,
+        weight: weightNum,
         activity_level: activity,
         goal,
       })
