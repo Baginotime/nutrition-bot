@@ -1,8 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: {
+        ready: () => void;
+        expand: () => void;
+        close: () => void;
+        MainButton: {
+          text: string;
+          show: () => void;
+          hide: () => void;
+          onClick: (callback: () => void) => void;
+        };
+      };
+    };
+  }
+}
 
 export default function HomePage() {
+  useEffect(() => {
+    // Инициализация Telegram Web App
+    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
+  }, []);
   const [form, setForm] = useState({
     age: "",
     gender: "male",
