@@ -22,9 +22,37 @@ declare global {
   }
 }
 
+type FormData = {
+  age: string;
+  gender: string;
+  height: string;
+  weight: string;
+  activity: string;
+  goal: string;
+};
+
+const STEPS = [
+  { id: 1, title: "Возраст", emoji: "🎂", field: "age" as keyof FormData },
+  { id: 2, title: "Пол", emoji: "👤", field: "gender" as keyof FormData },
+  { id: 3, title: "Рост", emoji: "📏", field: "height" as keyof FormData },
+  { id: 4, title: "Вес", emoji: "⚖️", field: "weight" as keyof FormData },
+  { id: 5, title: "Активность", emoji: "🏃", field: "activity" as keyof FormData },
+  { id: 6, title: "Цель", emoji: "🎯", field: "goal" as keyof FormData },
+];
+
 export default function HomePage() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [form, setForm] = useState<FormData>({
+    age: "",
+    gender: "male",
+    height: "",
+    weight: "",
+    activity: "low",
+    goal: "lose_fat",
+  });
+  const [status, setStatus] = useState<null | string>(null);
+
   useEffect(() => {
-    // Инициализация Telegram Web App
     if (typeof window !== "undefined") {
       const initTelegram = () => {
         if (window.Telegram?.WebApp) {
@@ -53,338 +81,539 @@ export default function HomePage() {
     }
   }, []);
 
-  const [form, setForm] = useState({
-    age: "",
-    gender: "male",
-    height: "",
-    weight: "",
-    activity: "low",
-    goal: "lose_fat",
-  });
+  const handleNext = () => {
+    const currentField = STEPS[currentStep].field;
+    if (form[currentField] && form[currentField] !== "") {
+      if (currentStep < STEPS.length - 1) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        handleSubmit();
+      }
+    }
+  };
 
-  const [status, setStatus] = useState<null | string>(null);
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setStatus("loading");
-
     try {
       const res = await fetch("/api/save-profile", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         setStatus(data?.message || "Ошибка");
         return;
       }
-
       setStatus("saved");
     } catch (err) {
       console.error("fetch error:", err);
       setStatus("network_error");
     }
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '14px 16px',
-    border: '1.5px solid #e5e7eb',
-    borderRadius: '12px',
-    backgroundColor: '#ffffff',
-    color: '#111827',
-    fontSize: '16px',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-    transition: 'all 0.2s ease',
-    boxSizing: 'border-box',
   };
 
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: '8px',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-  };
-
-  const fieldContainerStyle: React.CSSProperties = {
-    marginBottom: '24px',
-  };
-
-  return (
-    <main style={{
-      width: '100%',
-      maxWidth: '480px',
-      margin: '0 auto',
-      padding: '20px 16px',
-      minHeight: '100vh',
-      boxSizing: 'border-box',
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '20px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        padding: '32px 24px',
-        border: 'none',
-      }}>
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: '700',
-            color: '#111827',
-            marginBottom: '8px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            lineHeight: '1.2',
-          }}>
-            Анкета питания
-          </h1>
-          <p style={{
-            color: '#6b7280',
-            fontSize: '15px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            lineHeight: '1.5',
-          }}>
-            Заполните данные для расчета вашей нормы калорий
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
+  const renderStepContent = () => {
+    const step = STEPS[currentStep];
+    
+    switch (step.field) {
+      case "age":
+        return (
           <div style={fieldContainerStyle}>
-            <label style={labelStyle}>Возраст</label>
+            <div style={emojiStyle}>{step.emoji}</div>
+            <h2 style={stepTitleStyle}>{step.title}</h2>
+            <p style={stepDescriptionStyle}>Сколько тебе лет?</p>
             <input
               type="number"
               value={form.age}
               onChange={(e) => setForm({ ...form, age: e.target.value })}
-              style={{
-                ...inputStyle,
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb';
-                e.target.style.boxShadow = 'none';
-              }}
+              style={inputStyle}
               placeholder="Введите возраст"
               min="1"
               max="120"
+              autoFocus
             />
           </div>
+        );
 
+      case "gender":
+        return (
           <div style={fieldContainerStyle}>
-            <label style={labelStyle}>Пол</label>
-            <select
-              value={form.gender}
-              onChange={(e) => setForm({ ...form, gender: e.target.value })}
-              style={{
-                ...inputStyle,
-                cursor: 'pointer',
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23374151' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 16px center',
-                paddingRight: '40px',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
-              <option value="male">Мужской</option>
-              <option value="female">Женский</option>
-            </select>
+            <div style={emojiStyle}>{step.emoji}</div>
+            <h2 style={stepTitleStyle}>{step.title}</h2>
+            <p style={stepDescriptionStyle}>Выбери свой пол</p>
+            <div style={buttonGroupStyle}>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, gender: "male" })}
+                style={{
+                  ...genderButtonStyle,
+                  backgroundColor: form.gender === "male" ? "#3b82f6" : "#f3f4f6",
+                  color: form.gender === "male" ? "#ffffff" : "#374151",
+                }}
+              >
+                👨 Мужской
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, gender: "female" })}
+                style={{
+                  ...genderButtonStyle,
+                  backgroundColor: form.gender === "female" ? "#ec4899" : "#f3f4f6",
+                  color: form.gender === "female" ? "#ffffff" : "#374151",
+                }}
+              >
+                👩 Женский
+              </button>
+            </div>
           </div>
+        );
 
+      case "height":
+        return (
           <div style={fieldContainerStyle}>
-            <label style={labelStyle}>Рост (см)</label>
+            <div style={emojiStyle}>{step.emoji}</div>
+            <h2 style={stepTitleStyle}>{step.title}</h2>
+            <p style={stepDescriptionStyle}>Какой у тебя рост в сантиметрах?</p>
             <input
               type="number"
               value={form.height}
               onChange={(e) => setForm({ ...form, height: e.target.value })}
               style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb';
-                e.target.style.boxShadow = 'none';
-              }}
-              placeholder="Введите рост"
+              placeholder="Например: 175"
               min="50"
               max="250"
+              autoFocus
             />
           </div>
+        );
 
+      case "weight":
+        return (
           <div style={fieldContainerStyle}>
-            <label style={labelStyle}>Вес (кг)</label>
+            <div style={emojiStyle}>{step.emoji}</div>
+            <h2 style={stepTitleStyle}>{step.title}</h2>
+            <p style={stepDescriptionStyle}>Какой у тебя вес в килограммах?</p>
             <input
               type="number"
               value={form.weight}
               onChange={(e) => setForm({ ...form, weight: e.target.value })}
               style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb';
-                e.target.style.boxShadow = 'none';
-              }}
-              placeholder="Введите вес"
+              placeholder="Например: 70"
               min="20"
               max="300"
               step="0.1"
+              autoFocus
             />
           </div>
+        );
 
+      case "activity":
+        return (
           <div style={fieldContainerStyle}>
-            <label style={labelStyle}>Уровень активности</label>
-            <select
-              value={form.activity}
-              onChange={(e) => setForm({ ...form, activity: e.target.value })}
-              style={{
-                ...inputStyle,
-                cursor: 'pointer',
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23374151' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 16px center',
-                paddingRight: '40px',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
-              <option value="low">Низкая (сидячий образ жизни)</option>
-              <option value="medium">Средняя (легкие тренировки 1-3 раза в неделю)</option>
-              <option value="high">Высокая (интенсивные тренировки 4+ раз в неделю)</option>
-            </select>
+            <div style={emojiStyle}>{step.emoji}</div>
+            <h2 style={stepTitleStyle}>{step.title}</h2>
+            <p style={stepDescriptionStyle}>Как часто ты тренируешься?</p>
+            <div style={optionsContainerStyle}>
+              {[
+                { value: "low", label: "Низкая", desc: "Сидячий образ жизни", emoji: "🛋️" },
+                { value: "medium", label: "Средняя", desc: "Тренировки 1-3 раза в неделю", emoji: "🚶" },
+                { value: "high", label: "Высокая", desc: "Тренировки 4+ раз в неделю", emoji: "🏋️" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, activity: option.value })}
+                  style={{
+                    ...optionButtonStyle,
+                    borderColor: form.activity === option.value ? "#3b82f6" : "#e5e7eb",
+                    backgroundColor: form.activity === option.value ? "#eff6ff" : "#ffffff",
+                  }}
+                >
+                  <span style={optionEmojiStyle}>{option.emoji}</span>
+                  <div style={optionTextStyle}>
+                    <div style={optionLabelStyle}>{option.label}</div>
+                    <div style={optionDescStyle}>{option.desc}</div>
+                  </div>
+                  {form.activity === option.value && (
+                    <span style={checkStyle}>✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
+        );
 
+      case "goal":
+        return (
           <div style={fieldContainerStyle}>
-            <label style={labelStyle}>Цель</label>
-            <select
-              value={form.goal}
-              onChange={(e) => setForm({ ...form, goal: e.target.value })}
-              style={{
-                ...inputStyle,
-                cursor: 'pointer',
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23374151' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 16px center',
-                paddingRight: '40px',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb';
-                e.target.style.boxShadow = 'none';
-              }}
-            >
-              <option value="lose_fat">Похудеть</option>
-              <option value="maintain">Поддержать вес</option>
-              <option value="gain_muscle">Набрать мышечную массу</option>
-            </select>
+            <div style={emojiStyle}>{step.emoji}</div>
+            <h2 style={stepTitleStyle}>{step.title}</h2>
+            <p style={stepDescriptionStyle}>Какую цель ты преследуешь?</p>
+            <div style={optionsContainerStyle}>
+              {[
+                { value: "lose_fat", label: "Похудеть", desc: "Сбросить лишний вес", emoji: "🔥" },
+                { value: "maintain", label: "Поддержать", desc: "Сохранить текущий вес", emoji: "⚖️" },
+                { value: "gain_muscle", label: "Набрать массу", desc: "Увеличить мышечную массу", emoji: "💪" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, goal: option.value })}
+                  style={{
+                    ...optionButtonStyle,
+                    borderColor: form.goal === option.value ? "#3b82f6" : "#e5e7eb",
+                    backgroundColor: form.goal === option.value ? "#eff6ff" : "#ffffff",
+                  }}
+                >
+                  <span style={optionEmojiStyle}>{option.emoji}</span>
+                  <div style={optionTextStyle}>
+                    <div style={optionLabelStyle}>{option.label}</div>
+                    <div style={optionDescStyle}>{option.desc}</div>
+                  </div>
+                  {form.goal === option.value && (
+                    <span style={checkStyle}>✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
+        );
 
+      default:
+        return null;
+    }
+  };
+
+  if (status === "saved") {
+    return (
+      <main style={mainStyle}>
+        <div style={cardStyle}>
+          <div style={successContainerStyle}>
+            <div style={successEmojiStyle}>🎉</div>
+            <h1 style={successTitleStyle}>Анкета сохранена!</h1>
+            <p style={successTextStyle}>Твои данные успешно сохранены. Скоро мы рассчитаем твою норму калорий.</p>
+            {window.Telegram?.WebApp && (
+              <button
+                onClick={() => window.Telegram?.WebApp?.close()}
+                style={closeButtonStyle}
+              >
+                Закрыть
+              </button>
+            )}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main style={mainStyle}>
+      <div style={cardStyle}>
+        {/* Progress bar */}
+        <div style={progressContainerStyle}>
+          <div style={progressBarStyle}>
+            <div
+              style={{
+                ...progressFillStyle,
+                width: `${((currentStep + 1) / STEPS.length) * 100}%`,
+              }}
+            />
+          </div>
+          <div style={progressTextStyle}>
+            {currentStep + 1} из {STEPS.length}
+          </div>
+        </div>
+
+        {/* Step content */}
+        {renderStepContent()}
+
+        {/* Navigation buttons */}
+        <div style={navButtonsStyle}>
+          {currentStep > 0 && (
+            <button
+              type="button"
+              onClick={handleBack}
+              style={backButtonStyle}
+            >
+              ← Назад
+            </button>
+          )}
           <button
-            type="submit"
-            disabled={status === "loading"}
+            type="button"
+            onClick={handleNext}
+            disabled={!form[STEPS[currentStep].field] || form[STEPS[currentStep].field] === ""}
             style={{
-              width: '100%',
-              padding: '16px',
-              backgroundColor: status === "loading" ? '#9ca3af' : '#3b82f6',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '16px',
-              fontWeight: '600',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              cursor: status === "loading" ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: status === "loading" ? 'none' : '0 4px 6px -1px rgba(59, 130, 246, 0.3)',
-              marginTop: '8px',
-            }}
-            onMouseEnter={(e) => {
-              if (status !== "loading") {
-                e.currentTarget.style.backgroundColor = '#2563eb';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 8px -1px rgba(59, 130, 246, 0.4)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (status !== "loading") {
-                e.currentTarget.style.backgroundColor = '#3b82f6';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(59, 130, 246, 0.3)';
-              }
+              ...nextButtonStyle,
+              opacity: !form[STEPS[currentStep].field] || form[STEPS[currentStep].field] === "" ? 0.5 : 1,
+              cursor: !form[STEPS[currentStep].field] || form[STEPS[currentStep].field] === "" ? "not-allowed" : "pointer",
             }}
           >
-            {status === "loading" ? "Сохранение..." : "Сохранить анкету"}
+            {currentStep === STEPS.length - 1 ? "Сохранить ✅" : "Далее →"}
           </button>
+        </div>
 
-          {status === "saved" && (
-            <div style={{
-              marginTop: '20px',
-              padding: '16px',
-              backgroundColor: '#f0fdf4',
-              border: '1.5px solid #86efac',
-              borderRadius: '12px',
-            }}>
-              <p style={{
-                textAlign: 'center',
-                color: '#166534',
-                fontWeight: '600',
-                fontSize: '15px',
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-                margin: 0,
-              }}>
-                ✅ Анкета сохранена
-              </p>
-            </div>
-          )}
-          {status && status !== "loading" && status !== "saved" && (
-            <div style={{
-              marginTop: '20px',
-              padding: '16px',
-              backgroundColor: '#fef2f2',
-              border: '1.5px solid #fca5a5',
-              borderRadius: '12px',
-            }}>
-              <p style={{
-                textAlign: 'center',
-                color: '#991b1b',
-                fontWeight: '600',
-                fontSize: '15px',
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-                margin: 0,
-              }}>
-                {status}
-              </p>
-            </div>
-          )}
-        </form>
+        {status && status !== "loading" && status !== "saved" && (
+          <div style={errorStyle}>
+            <span style={{ marginRight: "8px" }}>❌</span>
+            {status}
+          </div>
+        )}
       </div>
     </main>
   );
 }
+
+// Styles
+const mainStyle: React.CSSProperties = {
+  width: "100%",
+  maxWidth: "480px",
+  margin: "0 auto",
+  padding: "20px 16px",
+  minHeight: "100vh",
+  boxSizing: "border-box",
+  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+};
+
+const cardStyle: React.CSSProperties = {
+  backgroundColor: "#ffffff",
+  borderRadius: "24px",
+  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+  padding: "32px 24px",
+  minHeight: "500px",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const progressContainerStyle: React.CSSProperties = {
+  marginBottom: "32px",
+};
+
+const progressBarStyle: React.CSSProperties = {
+  width: "100%",
+  height: "8px",
+  backgroundColor: "#e5e7eb",
+  borderRadius: "4px",
+  overflow: "hidden",
+  marginBottom: "8px",
+};
+
+const progressFillStyle: React.CSSProperties = {
+  height: "100%",
+  background: "linear-gradient(90deg, #3b82f6, #8b5cf6)",
+  borderRadius: "4px",
+  transition: "width 0.3s ease",
+};
+
+const progressTextStyle: React.CSSProperties = {
+  textAlign: "center",
+  fontSize: "14px",
+  color: "#6b7280",
+  fontWeight: "500",
+};
+
+const fieldContainerStyle: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+};
+
+const emojiStyle: React.CSSProperties = {
+  fontSize: "64px",
+  marginBottom: "16px",
+  lineHeight: "1",
+};
+
+const stepTitleStyle: React.CSSProperties = {
+  fontSize: "28px",
+  fontWeight: "700",
+  color: "#111827",
+  marginBottom: "8px",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
+
+const stepDescriptionStyle: React.CSSProperties = {
+  fontSize: "16px",
+  color: "#6b7280",
+  marginBottom: "32px",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "16px 20px",
+  border: "2px solid #e5e7eb",
+  borderRadius: "16px",
+  backgroundColor: "#f9fafb",
+  color: "#111827",
+  fontSize: "18px",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+  textAlign: "center",
+  transition: "all 0.2s ease",
+  boxSizing: "border-box",
+};
+
+const buttonGroupStyle: React.CSSProperties = {
+  display: "flex",
+  gap: "12px",
+  width: "100%",
+};
+
+const genderButtonStyle: React.CSSProperties = {
+  flex: 1,
+  padding: "20px",
+  border: "none",
+  borderRadius: "16px",
+  fontSize: "18px",
+  fontWeight: "600",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+};
+
+const optionsContainerStyle: React.CSSProperties = {
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+};
+
+const optionButtonStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "20px",
+  border: "2px solid",
+  borderRadius: "16px",
+  display: "flex",
+  alignItems: "center",
+  gap: "16px",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  textAlign: "left",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
+
+const optionEmojiStyle: React.CSSProperties = {
+  fontSize: "32px",
+  lineHeight: "1",
+};
+
+const optionTextStyle: React.CSSProperties = {
+  flex: 1,
+};
+
+const optionLabelStyle: React.CSSProperties = {
+  fontSize: "18px",
+  fontWeight: "600",
+  color: "#111827",
+  marginBottom: "4px",
+};
+
+const optionDescStyle: React.CSSProperties = {
+  fontSize: "14px",
+  color: "#6b7280",
+};
+
+const checkStyle: React.CSSProperties = {
+  fontSize: "24px",
+  color: "#3b82f6",
+  fontWeight: "bold",
+};
+
+const navButtonsStyle: React.CSSProperties = {
+  display: "flex",
+  gap: "12px",
+  marginTop: "32px",
+};
+
+const backButtonStyle: React.CSSProperties = {
+  flex: 1,
+  padding: "16px",
+  backgroundColor: "#f3f4f6",
+  color: "#374151",
+  border: "none",
+  borderRadius: "12px",
+  fontSize: "16px",
+  fontWeight: "600",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+};
+
+const nextButtonStyle: React.CSSProperties = {
+  flex: 2,
+  padding: "16px",
+  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+  color: "#ffffff",
+  border: "none",
+  borderRadius: "12px",
+  fontSize: "16px",
+  fontWeight: "600",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  boxShadow: "0 4px 6px rgba(59, 130, 246, 0.3)",
+};
+
+const successContainerStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+  flex: 1,
+};
+
+const successEmojiStyle: React.CSSProperties = {
+  fontSize: "80px",
+  marginBottom: "24px",
+};
+
+const successTitleStyle: React.CSSProperties = {
+  fontSize: "28px",
+  fontWeight: "700",
+  color: "#111827",
+  marginBottom: "12px",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
+
+const successTextStyle: React.CSSProperties = {
+  fontSize: "16px",
+  color: "#6b7280",
+  marginBottom: "32px",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
+
+const closeButtonStyle: React.CSSProperties = {
+  padding: "16px 32px",
+  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+  color: "#ffffff",
+  border: "none",
+  borderRadius: "12px",
+  fontSize: "16px",
+  fontWeight: "600",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+  cursor: "pointer",
+};
+
+const errorStyle: React.CSSProperties = {
+  marginTop: "16px",
+  padding: "16px",
+  backgroundColor: "#fef2f2",
+  border: "1.5px solid #fca5a5",
+  borderRadius: "12px",
+  color: "#991b1b",
+  fontWeight: "600",
+  fontSize: "15px",
+  textAlign: "center",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
