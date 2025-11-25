@@ -11,6 +11,14 @@ declare global {
         close: () => void;
         setHeaderColor?: (color: string) => void;
         setBackgroundColor?: (color: string) => void;
+        initDataUnsafe?: {
+          user?: {
+            id: number;
+            first_name?: string;
+            last_name?: string;
+            username?: string;
+          };
+        };
         MainButton: {
           text: string;
           show: () => void;
@@ -64,7 +72,7 @@ export default function HomePage() {
             window.Telegram.WebApp.setHeaderColor("#ffffff");
           }
           if (window.Telegram.WebApp.setBackgroundColor) {
-            window.Telegram.WebApp.setBackgroundColor("#f0f9ff");
+            window.Telegram.WebApp.setBackgroundColor("#f2f2f7");
           }
         }
       };
@@ -114,12 +122,28 @@ export default function HomePage() {
   const handleSubmit = async () => {
     setStatus("loading");
     try {
+      // Получаем Telegram user ID
+      const telegramUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      
       console.log("Submitting form:", form);
+      console.log("Telegram user:", telegramUser);
+      
+      const payload = {
+        ...form,
+        telegram_user_id: telegramUserId,
+        telegram_user: telegramUser ? {
+          id: telegramUser.id,
+          first_name: telegramUser.first_name,
+          last_name: telegramUser.last_name,
+          username: telegramUser.username,
+        } : null,
+      };
       
       const res = await fetch("/api/save-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -170,8 +194,8 @@ export default function HomePage() {
                 onClick={() => setForm({ ...form, gender: "male" })}
                 style={{
                   ...genderButtonStyle,
-                  backgroundColor: form.gender === "male" ? "#3b82f6" : "#f3f4f6",
-                  color: form.gender === "male" ? "#ffffff" : "#374151",
+                  backgroundColor: form.gender === "male" ? "#007AFF" : "#f2f2f7",
+                  color: form.gender === "male" ? "#ffffff" : "#000000",
                 }}
               >
                 👨 Мужской
@@ -181,8 +205,8 @@ export default function HomePage() {
                 onClick={() => setForm({ ...form, gender: "female" })}
                 style={{
                   ...genderButtonStyle,
-                  backgroundColor: form.gender === "female" ? "#ec4899" : "#f3f4f6",
-                  color: form.gender === "female" ? "#ffffff" : "#374151",
+                  backgroundColor: form.gender === "female" ? "#FF2D55" : "#f2f2f7",
+                  color: form.gender === "female" ? "#ffffff" : "#000000",
                 }}
               >
                 👩 Женский
@@ -201,6 +225,12 @@ export default function HomePage() {
               type="number"
               value={form.age}
               onChange={(e) => setForm({ ...form, age: e.target.value })}
+              onFocus={(e) => {
+                e.target.style.backgroundColor = "#e5e5ea";
+              }}
+              onBlur={(e) => {
+                e.target.style.backgroundColor = "#f2f2f7";
+              }}
               style={inputStyle}
               placeholder="Введите возраст"
               min="1"
@@ -220,6 +250,12 @@ export default function HomePage() {
               type="number"
               value={form.height}
               onChange={(e) => setForm({ ...form, height: e.target.value })}
+              onFocus={(e) => {
+                e.target.style.backgroundColor = "#e5e5ea";
+              }}
+              onBlur={(e) => {
+                e.target.style.backgroundColor = "#f2f2f7";
+              }}
               style={inputStyle}
               placeholder="Например: 175"
               min="50"
@@ -239,6 +275,12 @@ export default function HomePage() {
               type="number"
               value={form.weight}
               onChange={(e) => setForm({ ...form, weight: e.target.value })}
+              onFocus={(e) => {
+                e.target.style.backgroundColor = "#e5e5ea";
+              }}
+              onBlur={(e) => {
+                e.target.style.backgroundColor = "#f2f2f7";
+              }}
               style={inputStyle}
               placeholder="Например: 70"
               min="20"
@@ -267,8 +309,8 @@ export default function HomePage() {
                   onClick={() => setForm({ ...form, activity: option.value })}
                   style={{
                     ...optionButtonStyle,
-                    borderColor: form.activity === option.value ? "#3b82f6" : "#e5e7eb",
-                    backgroundColor: form.activity === option.value ? "#eff6ff" : "#ffffff",
+                    backgroundColor: form.activity === option.value ? "#e3f2fd" : "#f2f2f7",
+                    border: form.activity === option.value ? "1.5px solid #007AFF" : "1.5px solid transparent",
                   }}
                 >
                   <span style={optionEmojiStyle}>{option.emoji}</span>
@@ -303,8 +345,8 @@ export default function HomePage() {
                   onClick={() => setForm({ ...form, goal: option.value })}
                   style={{
                     ...optionButtonStyle,
-                    borderColor: form.goal === option.value ? "#3b82f6" : "#e5e7eb",
-                    backgroundColor: form.goal === option.value ? "#eff6ff" : "#ffffff",
+                    backgroundColor: form.goal === option.value ? "#e3f2fd" : "#f2f2f7",
+                    border: form.goal === option.value ? "1.5px solid #007AFF" : "1.5px solid transparent",
                   }}
                 >
                   <span style={optionEmojiStyle}>{option.emoji}</span>
@@ -411,23 +453,24 @@ export default function HomePage() {
   );
 }
 
-// Styles
+// Styles - iOS Design
 const mainStyle: React.CSSProperties = {
   width: "100%",
   maxWidth: "480px",
   margin: "0 auto",
-  padding: "20px 16px",
+  padding: "0",
   minHeight: "100vh",
   boxSizing: "border-box",
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  background: "#f2f2f7", // iOS light gray background
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif",
 };
 
 const cardStyle: React.CSSProperties = {
   backgroundColor: "#ffffff",
-  borderRadius: "24px",
-  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-  padding: "32px 24px",
-  minHeight: "500px",
+  borderRadius: "0",
+  boxShadow: "none",
+  padding: "20px 16px",
+  minHeight: "100vh",
   display: "flex",
   flexDirection: "column",
 };
@@ -438,25 +481,26 @@ const progressContainerStyle: React.CSSProperties = {
 
 const progressBarStyle: React.CSSProperties = {
   width: "100%",
-  height: "8px",
-  backgroundColor: "#e5e7eb",
-  borderRadius: "4px",
+  height: "4px",
+  backgroundColor: "#e5e5ea",
+  borderRadius: "2px",
   overflow: "hidden",
-  marginBottom: "8px",
+  marginBottom: "12px",
 };
 
 const progressFillStyle: React.CSSProperties = {
   height: "100%",
-  background: "linear-gradient(90deg, #3b82f6, #8b5cf6)",
-  borderRadius: "4px",
-  transition: "width 0.3s ease",
+  backgroundColor: "#007AFF", // iOS blue
+  borderRadius: "2px",
+  transition: "width 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)",
 };
 
 const progressTextStyle: React.CSSProperties = {
   textAlign: "center",
-  fontSize: "14px",
-  color: "#6b7280",
-  fontWeight: "500",
+  fontSize: "13px",
+  color: "#8e8e93",
+  fontWeight: "400",
+  letterSpacing: "-0.08px",
 };
 
 const fieldContainerStyle: React.CSSProperties = {
@@ -475,40 +519,47 @@ const emojiStyle: React.CSSProperties = {
 };
 
 const stepTitleStyle: React.CSSProperties = {
-  fontSize: "28px",
+  fontSize: "34px",
   fontWeight: "700",
-  color: "#111827",
+  color: "#000000",
   marginBottom: "8px",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.5px",
+  lineHeight: "1.1",
 };
 
 const stepDescriptionStyle: React.CSSProperties = {
-  fontSize: "16px",
-  color: "#6b7280",
-  marginBottom: "32px",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontSize: "17px",
+  color: "#8e8e93",
+  marginBottom: "40px",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  fontWeight: "400",
+  letterSpacing: "-0.24px",
 };
 
 const welcomeTextStyle: React.CSSProperties = {
-  fontSize: "16px",
-  color: "#4b5563",
-  lineHeight: "1.6",
+  fontSize: "17px",
+  color: "#000000",
+  lineHeight: "1.47",
   maxWidth: "400px",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  fontWeight: "400",
+  letterSpacing: "-0.24px",
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "16px 20px",
-  border: "2px solid #e5e7eb",
-  borderRadius: "16px",
-  backgroundColor: "#f9fafb",
-  color: "#111827",
-  fontSize: "18px",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  padding: "14px 16px",
+  border: "none",
+  borderRadius: "10px",
+  backgroundColor: "#f2f2f7",
+  color: "#000000",
+  fontSize: "17px",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
   textAlign: "center",
-  transition: "all 0.2s ease",
+  transition: "all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)",
   boxSizing: "border-box",
+  outline: "none",
 };
 
 const buttonGroupStyle: React.CSSProperties = {
@@ -519,15 +570,16 @@ const buttonGroupStyle: React.CSSProperties = {
 
 const genderButtonStyle: React.CSSProperties = {
   flex: 1,
-  padding: "20px",
+  padding: "16px 20px",
   border: "none",
-  borderRadius: "16px",
-  fontSize: "18px",
+  borderRadius: "12px",
+  fontSize: "17px",
   fontWeight: "600",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
   cursor: "pointer",
-  transition: "all 0.2s ease",
-  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+  transition: "all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)",
+  boxShadow: "none",
+  letterSpacing: "-0.24px",
 };
 
 const optionsContainerStyle: React.CSSProperties = {
@@ -539,16 +591,17 @@ const optionsContainerStyle: React.CSSProperties = {
 
 const optionButtonStyle: React.CSSProperties = {
   width: "100%",
-  padding: "20px",
-  border: "2px solid",
-  borderRadius: "16px",
+  padding: "16px",
+  border: "none",
+  borderRadius: "12px",
   display: "flex",
   alignItems: "center",
-  gap: "16px",
+  gap: "12px",
   cursor: "pointer",
-  transition: "all 0.2s ease",
+  transition: "all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)",
   textAlign: "left",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  boxShadow: "none",
 };
 
 const optionEmojiStyle: React.CSSProperties = {
@@ -561,21 +614,24 @@ const optionTextStyle: React.CSSProperties = {
 };
 
 const optionLabelStyle: React.CSSProperties = {
-  fontSize: "18px",
+  fontSize: "17px",
   fontWeight: "600",
-  color: "#111827",
-  marginBottom: "4px",
+  color: "#000000",
+  marginBottom: "2px",
+  letterSpacing: "-0.24px",
 };
 
 const optionDescStyle: React.CSSProperties = {
-  fontSize: "14px",
-  color: "#6b7280",
+  fontSize: "15px",
+  color: "#8e8e93",
+  fontWeight: "400",
+  letterSpacing: "-0.08px",
 };
 
 const checkStyle: React.CSSProperties = {
-  fontSize: "24px",
-  color: "#3b82f6",
-  fontWeight: "bold",
+  fontSize: "20px",
+  color: "#007AFF",
+  fontWeight: "600",
 };
 
 const navButtonsStyle: React.CSSProperties = {
@@ -586,31 +642,33 @@ const navButtonsStyle: React.CSSProperties = {
 
 const backButtonStyle: React.CSSProperties = {
   flex: 1,
-  padding: "16px",
-  backgroundColor: "#f3f4f6",
-  color: "#374151",
+  padding: "14px 20px",
+  backgroundColor: "#f2f2f7",
+  color: "#007AFF",
   border: "none",
   borderRadius: "12px",
-  fontSize: "16px",
+  fontSize: "17px",
   fontWeight: "600",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
   cursor: "pointer",
-  transition: "all 0.2s ease",
+  transition: "all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)",
+  letterSpacing: "-0.24px",
 };
 
 const nextButtonStyle: React.CSSProperties = {
   flex: 2,
-  padding: "16px",
-  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+  padding: "14px 20px",
+  backgroundColor: "#007AFF",
   color: "#ffffff",
   border: "none",
   borderRadius: "12px",
-  fontSize: "16px",
+  fontSize: "17px",
   fontWeight: "600",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
   cursor: "pointer",
-  transition: "all 0.2s ease",
-  boxShadow: "0 4px 6px rgba(59, 130, 246, 0.3)",
+  transition: "all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)",
+  boxShadow: "none",
+  letterSpacing: "-0.24px",
 };
 
 const successContainerStyle: React.CSSProperties = {
@@ -628,41 +686,49 @@ const successEmojiStyle: React.CSSProperties = {
 };
 
 const successTitleStyle: React.CSSProperties = {
-  fontSize: "28px",
+  fontSize: "34px",
   fontWeight: "700",
-  color: "#111827",
+  color: "#000000",
   marginBottom: "12px",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.5px",
+  lineHeight: "1.1",
 };
 
 const successTextStyle: React.CSSProperties = {
-  fontSize: "16px",
-  color: "#6b7280",
+  fontSize: "17px",
+  color: "#8e8e93",
   marginBottom: "32px",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  fontWeight: "400",
+  letterSpacing: "-0.24px",
+  lineHeight: "1.47",
 };
 
 const closeButtonStyle: React.CSSProperties = {
-  padding: "16px 32px",
-  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+  padding: "14px 32px",
+  backgroundColor: "#007AFF",
   color: "#ffffff",
   border: "none",
   borderRadius: "12px",
-  fontSize: "16px",
+  fontSize: "17px",
   fontWeight: "600",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
   cursor: "pointer",
+  letterSpacing: "-0.24px",
+  transition: "all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)",
 };
 
 const errorStyle: React.CSSProperties = {
   marginTop: "16px",
-  padding: "16px",
-  backgroundColor: "#fef2f2",
-  border: "1.5px solid #fca5a5",
+  padding: "14px 16px",
+  backgroundColor: "#ffebee",
+  border: "none",
   borderRadius: "12px",
-  color: "#991b1b",
-  fontWeight: "600",
+  color: "#c62828",
+  fontWeight: "500",
   fontSize: "15px",
   textAlign: "center",
-  fontFamily: "system-ui, -apple-system, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  letterSpacing: "-0.08px",
 };
