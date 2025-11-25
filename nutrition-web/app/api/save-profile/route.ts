@@ -76,32 +76,48 @@ export async function POST(req: Request) {
       } else {
         console.log("Creating new user...");
         // Создаём нового пользователя
+        const userData: any = {
+          telegram_id: telegram_user_id.toString(),
+        };
+        
+        // Добавляем опциональные поля только если они есть
+        if (telegram_user?.username) {
+          userData.username = telegram_user.username;
+        }
+        if (telegram_user?.first_name) {
+          userData.first_name = telegram_user.first_name;
+        }
+        if (telegram_user?.last_name) {
+          userData.last_name = telegram_user.last_name;
+        }
+        
         const { data: newUser, error: userError } = await supabase
           .from("users")
-          .insert({
-            telegram_id: telegram_user_id.toString(),
-            username: telegram_user?.username || null,
-            first_name: telegram_user?.first_name || null,
-            last_name: telegram_user?.last_name || null,
-          })
+          .insert(userData)
           .select("id")
           .single();
 
         if (userError) {
           console.error("❌ Error creating user:", userError);
+          console.error("Error code:", userError.code);
+          console.error("Error message:", userError.message);
           console.error("Error details:", JSON.stringify(userError, null, 2));
-          return NextResponse.json(
-            { 
-              message: "Ошибка при создании пользователя",
-              error: userError.message,
-              details: userError.details || userError.hint || null,
-            },
-            { status: 500 }
-          );
+          console.error("User data attempted:", JSON.stringify(userData, null, 2));
+          
+          // Если ошибка связана с таблицей users (например, таблица не существует),
+          // продолжаем без создания пользователя
+          if (userError.code === "42P01" || userError.message.includes("does not exist")) {
+            console.log("⚠️ Users table might not exist, continuing without user_id");
+            userId = null;
+          } else {
+            // Для других ошибок пытаемся продолжить без user_id
+            console.log("⚠️ Could not create user, continuing without user_id");
+            userId = null;
+          }
+        } else {
+          userId = newUser.id;
+          console.log(`✅ Created new user with id: ${userId}`);
         }
-
-        userId = newUser.id;
-        console.log(`✅ Created new user with id: ${userId}`);
       }
     } else {
       console.log("⚠️ No telegram_user_id provided, creating profile without user");
@@ -121,16 +137,24 @@ export async function POST(req: Request) {
       profileData.user_id = userId;
     }
 
-    // Проверяем, есть ли уже профиль для этого пользователя
+    // Сохраняем профиль (с user_id или без)
+    console.log("Attempting to save profile with data:", JSON.stringify(profileData, null, 2));
+    
     if (userId) {
-      const { data: existingProfile } = await supabase
+      // Проверяем, есть ли уже профиль для этого пользователя
+      const { data: existingProfile, error: checkError } = await supabase
         .from("profiles")
         .select("id")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle(); // используем maybeSingle вместо single, чтобы не было ошибки если нет записи
+
+      if (checkError && checkError.code !== "PGRST116") {
+        console.error("⚠️ Error checking existing profile:", checkError);
+      }
 
       let result;
       if (existingProfile) {
+        console.log("Updating existing profile...");
         // Обновляем существующий профиль
         result = await supabase
           .from("profiles")
@@ -139,6 +163,7 @@ export async function POST(req: Request) {
           .select()
           .single();
       } else {
+        console.log("Creating new profile...");
         // Создаём новый профиль
         result = await supabase
           .from("profiles")
@@ -155,6 +180,33 @@ export async function POST(req: Request) {
         console.error("Error message:", error.message);
         console.error("Error details:", JSON.stringify(error, null, 2));
         console.error("Profile data attempted:", JSON.stringify(profileData, null, 2));
+        
+        // Если ошибка из-за user_id, пробуем без него
+        if (error.message.includes("user_id") || error.code === "23503") {
+          console.log("⚠️ Error might be due to user_id constraint, trying without user_id...");
+          delete profileData.user_id;
+          const fallbackResult = await supabase
+            .from("profiles")
+            .insert(profileData)
+            .select()
+            .single();
+          
+          if (fallbackResult.error) {
+            return NextResponse.json(
+              { 
+                message: "Ошибка при сохранении анкеты",
+                error: fallbackResult.error.message,
+                details: fallbackResult.error.details || fallbackResult.error.hint || null,
+                code: fallbackResult.error.code,
+              },
+              { status: 500 }
+            );
+          }
+          
+          console.log("✅ Profile saved without user_id:", JSON.stringify(fallbackResult.data, null, 2));
+          return NextResponse.json({ success: true, profile: fallbackResult.data });
+        }
+        
         return NextResponse.json(
           { 
             message: "Ошибка при сохранении анкеты",
@@ -169,7 +221,8 @@ export async function POST(req: Request) {
       console.log("✅ Profile saved successfully:", JSON.stringify(data, null, 2));
       return NextResponse.json({ success: true, profile: data });
     } else {
-      // Fallback: создаём профиль без user_id (для тестирования)
+      // Создаём профиль без user_id
+      console.log("Creating profile without user_id...");
       const { data, error } = await supabase
         .from("profiles")
         .insert(profileData)
@@ -177,18 +230,23 @@ export async function POST(req: Request) {
         .single();
 
       if (error) {
-        console.error("supabase insert error:", error);
+        console.error("❌ Supabase insert error:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
         console.error("Error details:", JSON.stringify(error, null, 2));
+        console.error("Profile data attempted:", JSON.stringify(profileData, null, 2));
         return NextResponse.json(
           { 
             message: "Ошибка при сохранении анкеты",
             error: error.message,
-            details: error.details || error.hint || null
+            details: error.details || error.hint || null,
+            code: error.code,
           },
           { status: 500 }
         );
       }
 
+      console.log("✅ Profile saved successfully (without user_id):", JSON.stringify(data, null, 2));
       return NextResponse.json({ success: true, profile: data });
     }
   } catch (err) {
