@@ -61,6 +61,12 @@ export default function HomePage() {
     goal: "lose_fat",
   });
   const [status, setStatus] = useState<null | string>(null);
+  const [nutritionData, setNutritionData] = useState<{
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+  } | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -153,6 +159,11 @@ export default function HomePage() {
         console.error("Error response:", data);
         setStatus(data?.message || data?.error || "Ошибка при сохранении");
         return;
+      }
+      
+      // Сохраняем данные о питании
+      if (data.nutrition) {
+        setNutritionData(data.nutrition);
       }
       
       setStatus("saved");
@@ -729,6 +740,186 @@ const errorStyle: React.CSSProperties = {
   fontWeight: "500",
   fontSize: "15px",
   textAlign: "center",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  letterSpacing: "-0.08px",
+};
+
+const nutritionContainerStyle: React.CSSProperties = {
+  width: "100%",
+  marginTop: "24px",
+  marginBottom: "24px",
+};
+
+const nutritionTitleStyle: React.CSSProperties = {
+  fontSize: "22px",
+  fontWeight: "700",
+  color: "#000000",
+  marginBottom: "16px",
+  textAlign: "center",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.3px",
+};
+
+const nutritionCardStyle: React.CSSProperties = {
+  backgroundColor: "#f2f2f7",
+  borderRadius: "16px",
+  padding: "20px",
+  marginBottom: "16px",
+  textAlign: "center",
+};
+
+const nutritionItemStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "8px",
+};
+
+const nutritionEmojiStyle: React.CSSProperties = {
+  fontSize: "32px",
+  marginBottom: "4px",
+};
+
+const nutritionValueStyle: React.CSSProperties = {
+  fontSize: "36px",
+  fontWeight: "700",
+  color: "#007AFF",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.5px",
+};
+
+const nutritionLabelStyle: React.CSSProperties = {
+  fontSize: "15px",
+  color: "#8e8e93",
+  fontWeight: "400",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  letterSpacing: "-0.08px",
+};
+
+const macrosContainerStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-around",
+  gap: "12px",
+  width: "100%",
+};
+
+const macroItemStyle: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "6px",
+  backgroundColor: "#f2f2f7",
+  borderRadius: "12px",
+  padding: "16px 8px",
+};
+
+const macroEmojiStyle: React.CSSProperties = {
+  fontSize: "24px",
+};
+
+const macroValueStyle: React.CSSProperties = {
+  fontSize: "20px",
+  fontWeight: "700",
+  color: "#000000",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.24px",
+};
+
+const macroLabelStyle: React.CSSProperties = {
+  fontSize: "13px",
+  color: "#8e8e93",
+  fontWeight: "400",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  letterSpacing: "-0.08px",
+};
+
+const nutritionContainerStyle: React.CSSProperties = {
+  width: "100%",
+  marginTop: "24px",
+  marginBottom: "24px",
+};
+
+const nutritionTitleStyle: React.CSSProperties = {
+  fontSize: "22px",
+  fontWeight: "700",
+  color: "#000000",
+  marginBottom: "16px",
+  textAlign: "center",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.3px",
+};
+
+const nutritionCardStyle: React.CSSProperties = {
+  backgroundColor: "#f2f2f7",
+  borderRadius: "16px",
+  padding: "20px",
+  marginBottom: "16px",
+  textAlign: "center",
+};
+
+const nutritionItemStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "8px",
+};
+
+const nutritionEmojiStyle: React.CSSProperties = {
+  fontSize: "32px",
+  marginBottom: "4px",
+};
+
+const nutritionValueStyle: React.CSSProperties = {
+  fontSize: "36px",
+  fontWeight: "700",
+  color: "#007AFF",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.5px",
+};
+
+const nutritionLabelStyle: React.CSSProperties = {
+  fontSize: "15px",
+  color: "#8e8e93",
+  fontWeight: "400",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+  letterSpacing: "-0.08px",
+};
+
+const macrosContainerStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-around",
+  gap: "12px",
+  width: "100%",
+};
+
+const macroItemStyle: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "6px",
+  backgroundColor: "#f2f2f7",
+  borderRadius: "12px",
+  padding: "16px 8px",
+};
+
+const macroEmojiStyle: React.CSSProperties = {
+  fontSize: "24px",
+};
+
+const macroValueStyle: React.CSSProperties = {
+  fontSize: "20px",
+  fontWeight: "700",
+  color: "#000000",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+  letterSpacing: "-0.24px",
+};
+
+const macroLabelStyle: React.CSSProperties = {
+  fontSize: "13px",
+  color: "#8e8e93",
+  fontWeight: "400",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
   letterSpacing: "-0.08px",
 };

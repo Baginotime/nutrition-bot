@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase, validateSupabaseEnv } from "../../../lib/supabase";
+import { calculateNutrition, NutritionData } from "../../../lib/calculations";
 
 export const dynamic = "force-dynamic";
 
@@ -175,7 +176,24 @@ export async function POST(req: Request) {
       }
 
       console.log("✅ Profile saved successfully:", JSON.stringify(data, null, 2));
-      return NextResponse.json({ success: true, profile: data });
+      
+      // Рассчитываем калории и БЖУ
+      const nutrition = calculateNutrition({
+        age: ageNum,
+        gender: gender as 'male' | 'female',
+        height: heightNum,
+        weight: weightNum,
+        activity: activity as 'low' | 'medium' | 'high',
+        goal: goal as 'lose_fat' | 'maintain' | 'gain_muscle',
+      });
+      
+      console.log("📊 Calculated nutrition:", JSON.stringify(nutrition, null, 2));
+      
+      return NextResponse.json({ 
+        success: true, 
+        profile: data,
+        nutrition: nutrition,
+      });
     } else {
       // Создаём профиль без user_id
       console.log("Creating profile without user_id...");
@@ -203,7 +221,24 @@ export async function POST(req: Request) {
       }
 
       console.log("✅ Profile saved successfully (without user_id):", JSON.stringify(data, null, 2));
-      return NextResponse.json({ success: true, profile: data });
+      
+      // Рассчитываем калории и БЖУ
+      const nutrition = calculateNutrition({
+        age: ageNum,
+        gender: gender as 'male' | 'female',
+        height: heightNum,
+        weight: weightNum,
+        activity: activity as 'low' | 'medium' | 'high',
+        goal: goal as 'lose_fat' | 'maintain' | 'gain_muscle',
+      });
+      
+      console.log("📊 Calculated nutrition:", JSON.stringify(nutrition, null, 2));
+      
+      return NextResponse.json({ 
+        success: true, 
+        profile: data,
+        nutrition: nutrition,
+      });
     }
   } catch (err) {
     console.error("save-profile route error", err);
