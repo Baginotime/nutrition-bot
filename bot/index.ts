@@ -44,8 +44,13 @@ if (WEBAPP_URL.includes('localhost') || WEBAPP_URL.includes('127.0.0.1')) {
 // создаём экземпляр бота
 const bot = new Telegraf<Context>(BOT_TOKEN);
 
+// Тип для пользователя
+interface User {
+  id: string;
+}
+
 // Функция для создания/обновления пользователя в базе
-async function ensureUserExists(telegramId: number, userData: any) {
+async function ensureUserExists(telegramId: number, userData: any): Promise<string | null> {
   if (!supabase) {
     console.log('⚠️ Supabase not configured, skipping user creation');
     return null;
@@ -65,8 +70,9 @@ async function ensureUserExists(telegramId: number, userData: any) {
     }
 
     if (existingUser) {
-      console.log(`✅ User already exists: ${existingUser.id}`);
-      return existingUser.id;
+      const user = existingUser as User;
+      console.log(`✅ User already exists: ${user.id}`);
+      return user.id;
     }
 
     // Создаём нового пользователя
@@ -90,8 +96,13 @@ async function ensureUserExists(telegramId: number, userData: any) {
       return null;
     }
 
-    console.log(`✅ Created new user: ${newUser.id}`);
-    return newUser.id;
+    if (newUser) {
+      const user = newUser as User;
+      console.log(`✅ Created new user: ${user.id}`);
+      return user.id;
+    }
+
+    return null;
   } catch (error: any) {
     console.error('❌ Unexpected error in ensureUserExists:', error);
     return null;
