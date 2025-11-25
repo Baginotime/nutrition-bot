@@ -5,9 +5,25 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    validateSupabaseEnv();
+    console.log("=== Save Profile API Called ===");
+    console.log("Timestamp:", new Date().toISOString());
+    
+    try {
+      validateSupabaseEnv();
+      console.log("✅ Supabase environment variables validated");
+    } catch (envError: any) {
+      console.error("❌ Supabase env validation failed:", envError.message);
+      return NextResponse.json(
+        { 
+          message: "Ошибка конфигурации сервера",
+          error: envError.message 
+        },
+        { status: 500 }
+      );
+    }
+    
     const body = await req.json();
-    console.log("Received request body:", body);
+    console.log("Received request body:", JSON.stringify(body, null, 2));
 
     const {
       age,
@@ -38,6 +54,7 @@ export async function POST(req: Request) {
 
     // Если есть Telegram user ID, находим или создаём пользователя
     if (telegram_user_id) {
+      console.log(`Looking for user with telegram_id: ${telegram_user_id}`);
       // Ищем существующего пользователя по telegram_id
       const { data: existingUser, error: findError } = await supabase
         .from("users")
@@ -46,12 +63,18 @@ export async function POST(req: Request) {
         .single();
 
       if (findError && findError.code !== "PGRST116") { // PGRST116 = not found
-        console.error("Error finding user:", findError);
+        console.error("❌ Error finding user:", findError);
+        console.error("Error code:", findError.code);
+        console.error("Error message:", findError.message);
+      } else if (findError && findError.code === "PGRST116") {
+        console.log("ℹ️ User not found, will create new user");
       }
 
       if (existingUser) {
         userId = existingUser.id;
+        console.log(`✅ Found existing user with id: ${userId}`);
       } else {
+        console.log("Creating new user...");
         // Создаём нового пользователя
         const { data: newUser, error: userError } = await supabase
           .from("users")
@@ -65,18 +88,23 @@ export async function POST(req: Request) {
           .single();
 
         if (userError) {
-          console.error("Error creating user:", userError);
+          console.error("❌ Error creating user:", userError);
+          console.error("Error details:", JSON.stringify(userError, null, 2));
           return NextResponse.json(
             { 
               message: "Ошибка при создании пользователя",
               error: userError.message,
+              details: userError.details || userError.hint || null,
             },
             { status: 500 }
           );
         }
 
         userId = newUser.id;
+        console.log(`✅ Created new user with id: ${userId}`);
       }
+    } else {
+      console.log("⚠️ No telegram_user_id provided, creating profile without user");
     }
 
     // Если нет user_id, создаём профиль без привязки к пользователю (для тестирования)
@@ -122,18 +150,23 @@ export async function POST(req: Request) {
       const { data, error } = result;
 
       if (error) {
-        console.error("supabase insert/update error:", error);
+        console.error("❌ Supabase insert/update error:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
         console.error("Error details:", JSON.stringify(error, null, 2));
+        console.error("Profile data attempted:", JSON.stringify(profileData, null, 2));
         return NextResponse.json(
           { 
             message: "Ошибка при сохранении анкеты",
             error: error.message,
-            details: error.details || error.hint || null
+            details: error.details || error.hint || null,
+            code: error.code,
           },
           { status: 500 }
         );
       }
 
+      console.log("✅ Profile saved successfully:", JSON.stringify(data, null, 2));
       return NextResponse.json({ success: true, profile: data });
     } else {
       // Fallback: создаём профиль без user_id (для тестирования)
