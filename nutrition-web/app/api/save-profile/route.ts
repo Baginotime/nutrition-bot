@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     let userId: string | null = null;
 
-    // Если есть Telegram user ID, находим или создаём пользователя
+    // Если есть Telegram user ID, ищем пользователя (он должен быть создан при /start)
     if (telegram_user_id) {
       console.log(`Looking for user with telegram_id: ${telegram_user_id}`);
       // Ищем существующего пользователя по telegram_id
@@ -60,64 +60,20 @@ export async function POST(req: Request) {
         .from("users")
         .select("id")
         .eq("telegram_id", telegram_user_id.toString())
-        .single();
+        .maybeSingle();
 
-      if (findError && findError.code !== "PGRST116") { // PGRST116 = not found
+      if (findError) {
         console.error("❌ Error finding user:", findError);
         console.error("Error code:", findError.code);
         console.error("Error message:", findError.message);
-      } else if (findError && findError.code === "PGRST116") {
-        console.log("ℹ️ User not found, will create new user");
-      }
-
-      if (existingUser) {
+        // Продолжаем без user_id, если не нашли
+        userId = null;
+      } else if (existingUser) {
         userId = existingUser.id;
-        console.log(`✅ Found existing user with id: ${userId}`);
+        console.log(`✅ Found user with id: ${userId}`);
       } else {
-        console.log("Creating new user...");
-        // Создаём нового пользователя
-        const userData: any = {
-          telegram_id: telegram_user_id.toString(),
-        };
-        
-        // Добавляем опциональные поля только если они есть
-        if (telegram_user?.username) {
-          userData.username = telegram_user.username;
-        }
-        if (telegram_user?.first_name) {
-          userData.first_name = telegram_user.first_name;
-        }
-        if (telegram_user?.last_name) {
-          userData.last_name = telegram_user.last_name;
-        }
-        
-        const { data: newUser, error: userError } = await supabase
-          .from("users")
-          .insert(userData)
-          .select("id")
-          .single();
-
-        if (userError) {
-          console.error("❌ Error creating user:", userError);
-          console.error("Error code:", userError.code);
-          console.error("Error message:", userError.message);
-          console.error("Error details:", JSON.stringify(userError, null, 2));
-          console.error("User data attempted:", JSON.stringify(userData, null, 2));
-          
-          // Если ошибка связана с таблицей users (например, таблица не существует),
-          // продолжаем без создания пользователя
-          if (userError.code === "42P01" || userError.message.includes("does not exist")) {
-            console.log("⚠️ Users table might not exist, continuing without user_id");
-            userId = null;
-          } else {
-            // Для других ошибок пытаемся продолжить без user_id
-            console.log("⚠️ Could not create user, continuing without user_id");
-            userId = null;
-          }
-        } else {
-          userId = newUser.id;
-          console.log(`✅ Created new user with id: ${userId}`);
-        }
+        console.log("⚠️ User not found (should be created on /start), continuing without user_id");
+        userId = null;
       }
     } else {
       console.log("⚠️ No telegram_user_id provided, creating profile without user");
