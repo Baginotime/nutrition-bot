@@ -189,6 +189,26 @@ export async function POST(req: Request) {
       
       console.log("📊 Calculated nutrition:", JSON.stringify(nutrition, null, 2));
       
+      // Сохраняем расчеты в профиль (обновляем существующий профиль)
+      if (data && data.id) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            daily_calories: nutrition.calories,
+            daily_protein: nutrition.protein,
+            daily_carbs: nutrition.carbs,
+            daily_fats: nutrition.fats,
+          })
+          .eq("id", data.id);
+        
+        if (updateError) {
+          console.error("⚠️ Error updating nutrition data:", updateError);
+          // Не прерываем выполнение, просто логируем ошибку
+        } else {
+          console.log("✅ Nutrition data saved to profile");
+        }
+      }
+      
       return NextResponse.json({ 
         success: true, 
         profile: data,
@@ -233,6 +253,25 @@ export async function POST(req: Request) {
       });
       
       console.log("📊 Calculated nutrition:", JSON.stringify(nutrition, null, 2));
+      
+      // Сохраняем расчеты в профиль
+      if (data && data.id) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            daily_calories: nutrition.calories,
+            daily_protein: nutrition.protein,
+            daily_carbs: nutrition.carbs,
+            daily_fats: nutrition.fats,
+          })
+          .eq("id", data.id);
+        
+        if (updateError) {
+          console.error("⚠️ Error updating nutrition data:", updateError);
+        } else {
+          console.log("✅ Nutrition data saved to profile");
+        }
+      }
       
       return NextResponse.json({ 
         success: true, 

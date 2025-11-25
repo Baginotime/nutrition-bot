@@ -386,7 +386,42 @@ export default function HomePage() {
           <div style={successContainerStyle}>
             <div style={successEmojiStyle}>🎉</div>
             <h1 style={successTitleStyle}>Анкета сохранена!</h1>
-            <p style={successTextStyle}>Твои данные успешно сохранены. Скоро мы рассчитаем твою норму калорий.</p>
+            <p style={successTextStyle}>Твои данные успешно сохранены.</p>
+            
+            {nutritionData ? (
+              <div style={nutritionContainerStyle}>
+                <h2 style={nutritionTitleStyle}>📊 Твоя норма на день</h2>
+                <div style={nutritionCardStyle}>
+                  <div style={nutritionItemStyle}>
+                    <span style={nutritionEmojiStyle}>🔥</span>
+                    <div>
+                      <div style={nutritionValueStyle}>{nutritionData.calories}</div>
+                      <div style={nutritionLabelStyle}>ккал</div>
+                    </div>
+                  </div>
+                </div>
+                <div style={macrosContainerStyle}>
+                  <div style={macroItemStyle}>
+                    <span style={macroEmojiStyle}>🥩</span>
+                    <div style={macroValueStyle}>{nutritionData.protein} г</div>
+                    <div style={macroLabelStyle}>Белки</div>
+                  </div>
+                  <div style={macroItemStyle}>
+                    <span style={macroEmojiStyle}>🍞</span>
+                    <div style={macroValueStyle}>{nutritionData.carbs} г</div>
+                    <div style={macroLabelStyle}>Углеводы</div>
+                  </div>
+                  <div style={macroItemStyle}>
+                    <span style={macroEmojiStyle}>🥑</span>
+                    <div style={macroValueStyle}>{nutritionData.fats} г</div>
+                    <div style={macroLabelStyle}>Жиры</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p style={successTextStyle}>Расчет калорий...</p>
+            )}
+            
             {window.Telegram?.WebApp && (
               <button
                 onClick={() => window.Telegram?.WebApp?.close()}
